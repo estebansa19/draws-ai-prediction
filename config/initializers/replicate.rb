@@ -2,7 +2,12 @@ Replicate.client.api_token = Rails.application.credentials[:replicate][:api_toke
 
 class ReplicateWebhook
   def call(prediction)
-    binding.irb
+    if prediction.succeeded?
+      puts '================================================================='
+      puts 'Your prediction is ready!'
+      system("open #{prediction.output.first}")
+      puts '================================================================='
+    end
   end
 end
 

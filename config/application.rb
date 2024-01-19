@@ -30,5 +30,8 @@ module Skaitch
     #
     # config.time_zone = "Central Time (US & Canada)"
     # config.eager_load_paths << Rails.root.join("extras")
+
+    # Configuration to add Ngrok to the known hosts
+    config.hosts << '871a-186-121-10-27.ngrok-free.app'
   end
 end

@@ -1,5 +1,6 @@
 class PromptsController < ApplicationController
   before_action :set_prompt, only: %i[ show edit update destroy ]
+  skip_before_action :authenticate, only: %w[new create]
 
   # GET /prompts or /prompts.json
   def index
@@ -23,6 +24,9 @@ class PromptsController < ApplicationController
   def create
     @prompt = Prompt.new(prompt_params)
     @prompt.account = Current.account
+    replicate_version.predict({ prompt: prompt_params[:title], image: prompt_image_data_url }, replicate_rails_url)
+    redirect_to new_prompt_path
+    return nil
 
     respond_to do |format|
       if @prompt.save
@@ -59,13 +63,30 @@ class PromptsController < ApplicationController
   end
 
   private
-    # Use callbacks to share common setup or constraints between actions.
-    def set_prompt
-      @prompt = Prompt.find(params[:id])
-    end
+  # Use callbacks to share common setup or constraints between actions.
+  def set_prompt
+    @prompt = Prompt.find(params[:id])
+  end
 
-    # Only allow a list of trusted parameters through.
-    def prompt_params
-      params.require(:prompt).permit(:title, :description, :prompt_image, :account_id)
-    end
+  # Only allow a list of trusted parameters through.
+  def prompt_params
+    params.require(:prompt).permit(:title, :description, :prompt_image, :account_id)
+  end
+
+  # Get the latest version of the Replicate diffusion model
+  def replicate_version
+    model = Replicate.client.retrieve_model('stability-ai/stable-diffusion-img2img')
+
+    version = model.latest_version
+  end
+
+  def prompt_image_data_url
+    encoded_data = Base64.strict_encode64(prompt_image.read)
+
+    "data:image/#{prompt_image.content_type};base64,#{encoded_data}"
+  end
+
+  def prompt_image
+    @prompt_image ||= prompt_params[:prompt_image]
+  end
 end
